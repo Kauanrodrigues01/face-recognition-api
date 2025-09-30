@@ -72,7 +72,6 @@ docs/
 Thumbs.db
 
 # Alembic (keep only the necessary files)
-alembic.ini
 alembic/versions/*.pyc
 
 # InsightFace models (will be downloaded on first run)
