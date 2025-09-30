@@ -87,6 +87,18 @@ async def get_current_active_user(
     return current_user
 
 
+async def get_current_superuser(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+) -> User:
+    """Get current superuser"""
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions. Administrator access required.",
+        )
+    return current_user
+
+
 @router.post("/token", response_model=Token)
 async def login_for_swagger(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
@@ -285,6 +297,8 @@ async def face_login(
                 "email": user.email,
                 "name": user.name,
                 "face_enrolled": user.face_enrolled,
+                "is_superuser": user.is_superuser,
+                "is_active": user.is_active,
             },
         )
 

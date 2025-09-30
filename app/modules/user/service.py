@@ -51,6 +51,7 @@ class UserService:
             email=user_data.email,
             name=user_data.name,
             hashed_password=hashed_password,
+            is_superuser=user_data.is_superuser,
         )
         self.db.add(db_user)
         await self.db.flush()

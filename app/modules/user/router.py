@@ -1,7 +1,10 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.database import get_db
+from app.modules.auth.router import get_current_superuser
 from app.modules.auth.service import AuthService
 from app.modules.user.schemas import User, UserCreate, UserUpdate
 from app.modules.user.service import UserService
@@ -39,19 +42,22 @@ async def create_user(
 
 @router.get("/", response_model=list[User])
 async def read_users(
+    current_user: Annotated[User, Depends(get_current_superuser)],
     skip: int = 0,
     limit: int = 100,
     user_service: UserService = Depends(get_user_service),
 ):
-    """Get all users"""
+    """Get all users - Admin only"""
     return await user_service.get_all(skip=skip, limit=limit)
 
 
 @router.get("/{user_id}", response_model=User)
 async def read_user(
-    user_id: int, user_service: UserService = Depends(get_user_service)
+    user_id: int,
+    current_user: Annotated[User, Depends(get_current_superuser)],
+    user_service: UserService = Depends(get_user_service),
 ):
-    """Get a specific user by ID"""
+    """Get a specific user by ID - Admin only"""
     user = await user_service.get_by_id(user_id=user_id)
     if user is None:
         raise HTTPException(
@@ -64,10 +70,11 @@ async def read_user(
 async def update_user(
     user_id: int,
     user_update: UserUpdate,
+    current_user: Annotated[User, Depends(get_current_superuser)],
     user_service: UserService = Depends(get_user_service),
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    """Update a user"""
+    """Update a user - Admin only"""
     hashed_password = None
     if user_update.password:
         hashed_password = auth_service.get_password_hash(user_update.password)
@@ -84,9 +91,11 @@ async def update_user(
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
-    user_id: int, user_service: UserService = Depends(get_user_service)
+    user_id: int,
+    current_user: Annotated[User, Depends(get_current_superuser)],
+    user_service: UserService = Depends(get_user_service),
 ):
-    """Delete a user"""
+    """Delete a user - Admin only"""
     success = await user_service.delete(user_id=user_id)
     if not success:
         raise HTTPException(
