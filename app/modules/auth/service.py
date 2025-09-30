@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
@@ -21,14 +21,14 @@ class AuthService:
         return self.pwd_context.hash(password)
 
     def create_access_token(
-        self, data: dict, expires_delta: Optional[timedelta] = None
+        self, data: dict, expires_delta: timedelta | None = None
     ) -> str:
         """Create a JWT access token"""
         to_encode = data.copy()
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(
+            expire = datetime.now(UTC) + timedelta(
                 minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
             )
 
@@ -38,7 +38,7 @@ class AuthService:
         )
         return encoded_jwt
 
-    def decode_access_token(self, token: str) -> Optional[str]:
+    def decode_access_token(self, token: str) -> str | None:
         """Decode a JWT access token and return the email"""
         try:
             payload = jwt.decode(

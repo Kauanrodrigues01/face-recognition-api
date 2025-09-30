@@ -33,5 +33,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # Face Recognition Encryption
+    FACE_ENCRYPTION_KEY: str = "your-encryption-key-here"  # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+
 
 settings = Settings()

@@ -33,8 +33,13 @@ class UserInDBBase(BaseModel):
 
 
 class User(UserInDBBase):
-    pass
+    face_enrolled: bool = False
+    face_enrollment_quality: int | None = None
 
 
 class UserInDB(UserInDBBase):
     hashed_password: str
+    face_embedding_encrypted: str | None = None
+    face_enrollment_id: str | None = None
+    face_enrolled: bool = False
+    face_enrollment_quality: int | None = None
