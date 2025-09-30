@@ -43,3 +43,19 @@ class FaceLoginResponse(BaseModel):
     access_token: str
     token_type: str
     user: dict
+
+
+class FaceTestRequest(BaseModel):
+    """Schema for face recognition test - test if face is recognized"""
+
+    email: EmailStr
+    face_image_base64: str
+
+
+class FaceTestResponse(BaseModel):
+    """Response for face recognition test"""
+
+    match: bool
+    confidence: float
+    message: str
+    user: dict | None = None

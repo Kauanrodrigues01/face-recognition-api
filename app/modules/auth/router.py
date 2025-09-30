@@ -11,6 +11,7 @@ from app.db.database import get_db
 from app.modules.auth.schemas import (
     FaceEnrollResponse,
     FaceLoginResponse,
+    FaceTestResponse,
     Token,
     UserLogin,
 )
@@ -293,4 +294,91 @@ async def face_login(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Face login failed: {str(e)}",
+        )
+
+
+@router.post("/face/test", response_model=FaceTestResponse)
+async def test_face_recognition(
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    email: str = Form(...),  # noqa: PT028
+    user_service: UserService = Depends(get_user_service),  # noqa: PT028
+    face_image_base64: str | None = Form(None),  # noqa: PT028
+    face_image_file: UploadFile | None = File(None),  # noqa: PT028
+):
+    """
+    Test face recognition without logging in.
+
+    Requires authentication (user must be logged in).
+    Tests if the provided face matches the enrolled face for the given email.
+    Returns match result and confidence score.
+    """
+    # Validate that exactly one method is provided
+    if not face_image_base64 and not face_image_file:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either face_image_base64 or face_image_file must be provided",
+        )
+
+    if face_image_base64 and face_image_file:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide only one: face_image_base64 or face_image_file",
+        )
+
+    # Convert file to base64 if file was provided
+    if face_image_file:
+        contents = await face_image_file.read()
+        face_image_base64 = base64.b64encode(contents).decode("utf-8")
+
+    try:
+        # Get target user
+        target_user = await user_service.get_by_email(email=email)
+        if not target_user:
+            return FaceTestResponse(
+                match=False,
+                confidence=0.0,
+                message="User not found",
+                user=None,
+            )
+
+        if not target_user.face_enrolled:
+            return FaceTestResponse(
+                match=False,
+                confidence=0.0,
+                message="User has not enrolled face biometrics",
+                user=None,
+            )
+
+        # Test face recognition
+        user = await user_service.authenticate_with_face(
+            email=email,
+            face_image_base64=face_image_base64,
+        )
+
+        if user:
+            return FaceTestResponse(
+                match=True,
+                confidence=0.95,  # High confidence if authenticated
+                message="Face recognized successfully",
+                user={
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "face_enrolled": user.face_enrolled,
+                },
+            )
+        else:
+            return FaceTestResponse(
+                match=False,
+                confidence=0.0,
+                message="Face does not match enrolled biometrics",
+                user=None,
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Face test failed: {str(e)}",
         )
