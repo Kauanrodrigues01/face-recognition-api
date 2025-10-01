@@ -36,8 +36,9 @@ class FaceQuality(Enum):
 class SecurityLevel(Enum):
     """Security levels for face matching."""
 
-    HIGH = 0.35  # Strictest - lowest false acceptance
-    MEDIUM = 0.45  # Balanced
+    VERY_HIGH = 0.25  # Ultra strict - 90%+ confidence required
+    HIGH = 0.35  # Strictest - 85%+ confidence, lowest false acceptance
+    MEDIUM = 0.45  # Balanced - 75%+ confidence
     LOW = 0.55  # More permissive - lowest false rejection
 
 

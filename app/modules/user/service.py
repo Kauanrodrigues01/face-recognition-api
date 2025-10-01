@@ -167,7 +167,7 @@ class UserService:
         self,
         user_id: int,
         face_image_base64: str,
-        security_level: SecurityLevel = SecurityLevel.MEDIUM,
+        security_level: SecurityLevel = SecurityLevel.VERY_HIGH,
         min_quality: FaceQuality = FaceQuality.ACCEPTABLE,
     ) -> dict:
         """
@@ -216,7 +216,7 @@ class UserService:
         self,
         email: str,
         face_image_base64: str,
-        security_level: SecurityLevel = SecurityLevel.HIGH,
+        security_level: SecurityLevel = SecurityLevel.VERY_HIGH,
     ) -> User | None:
         """
         Authenticate user with email + face biometric.
