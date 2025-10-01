@@ -293,21 +293,19 @@ async def face_login(
         )
 
         confidence_percent = verification_result["confidence"]
-        MIN_CONFIDENCE_THRESHOLD = 80.0
+        min_confidence_threshold = 80.0
 
         # Check if verified and meets minimum confidence
         if not verification_result["verified"]:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Face authentication failed. Confidence: {confidence_percent:.1f}%. Minimum required: {MIN_CONFIDENCE_THRESHOLD}%",
-                headers={"WWW-Authenticate": "Bearer"},
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Face authentication failed. Confidence: {confidence_percent:.1f}%. Minimum required: {min_confidence_threshold}%",
             )
 
-        if confidence_percent < MIN_CONFIDENCE_THRESHOLD:
+        if confidence_percent < min_confidence_threshold:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Confidence too low: {confidence_percent:.1f}%. Minimum required: {MIN_CONFIDENCE_THRESHOLD}%",
-                headers={"WWW-Authenticate": "Bearer"},
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Confidence too low: {confidence_percent:.1f}%. Minimum required: {min_confidence_threshold}%",
             )
 
         # Generate access token
