@@ -270,16 +270,43 @@ async def face_login(
         face_image_base64 = base64.b64encode(contents).decode("utf-8")
 
     try:
-        # Authenticate with face
-        user = await user_service.authenticate_with_face(
-            email=email,
-            face_image_base64=face_image_base64,
-        )
-
+        # Get user to verify face enrollment
+        user = await user_service.get_by_email(email=email)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Face authentication failed",
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if not user.face_enrolled:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Face biometric not enrolled for this user",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Verify face and get confidence score
+        verification_result = await user_service.verify_face(
+            user_id=user.id,
+            face_image_base64=face_image_base64,
+        )
+
+        confidence_percent = verification_result["confidence"]
+        MIN_CONFIDENCE_THRESHOLD = 80.0
+
+        # Check if verified and meets minimum confidence
+        if not verification_result["verified"]:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Face authentication failed. Confidence: {confidence_percent:.1f}%. Minimum required: {MIN_CONFIDENCE_THRESHOLD}%",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if confidence_percent < MIN_CONFIDENCE_THRESHOLD:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Confidence too low: {confidence_percent:.1f}%. Minimum required: {MIN_CONFIDENCE_THRESHOLD}%",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
@@ -304,6 +331,16 @@ async def face_login(
 
     except HTTPException:
         raise
+    except (
+        NoFaceDetectedError,
+        MultipleFacesError,
+        LowQualityFaceError,
+        SpoofingDetectedError,
+    ) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Face verification failed: {str(e)}",
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
