@@ -363,29 +363,45 @@ async def test_face_recognition(
                 user=None,
             )
 
-        # Test face recognition
-        user = await user_service.authenticate_with_face(
-            email=email,
-            face_image_base64=face_image_base64,
-        )
-
-        if user:
-            return FaceTestResponse(
-                match=True,
-                confidence=0.95,  # High confidence if authenticated
-                message="Face recognized successfully",
-                user={
-                    "id": user.id,
-                    "email": user.email,
-                    "name": user.name,
-                    "face_enrolled": user.face_enrolled,
-                },
+        # Test face recognition and get actual confidence score
+        try:
+            verification_result = await user_service.verify_face(
+                user_id=target_user.id,
+                face_image_base64=face_image_base64,
             )
-        else:
+
+            # Convert confidence from 0-100 to 0-1 for frontend
+            confidence_normalized = verification_result["confidence"] / 100.0
+
+            if verification_result["verified"]:
+                return FaceTestResponse(
+                    match=True,
+                    confidence=confidence_normalized,
+                    message="Face recognized successfully",
+                    user={
+                        "id": target_user.id,
+                        "email": target_user.email,
+                        "name": target_user.name,
+                        "face_enrolled": target_user.face_enrolled,
+                    },
+                )
+            else:
+                return FaceTestResponse(
+                    match=False,
+                    confidence=confidence_normalized,
+                    message="Face does not match enrolled biometrics",
+                    user=None,
+                )
+        except (
+            NoFaceDetectedError,
+            MultipleFacesError,
+            LowQualityFaceError,
+            SpoofingDetectedError,
+        ) as e:
             return FaceTestResponse(
                 match=False,
                 confidence=0.0,
-                message="Face does not match enrolled biometrics",
+                message=f"Face verification failed: {str(e)}",
                 user=None,
             )
 
