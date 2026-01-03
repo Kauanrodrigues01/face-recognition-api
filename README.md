@@ -1,11 +1,7 @@
 # Face Recognition API - Sistema de Autenticação Biométrica Facial
 
 <p align="center">
-  <img src="URL_DA_IMAGEM_1" alt="Face Recognition Demo" width="700"/>
-</p>
-
-<p align="center">
-  <img src="URL_DA_IMAGEM_2" alt="API Documentation" width="700"/>
+  <img src="https://raw.githubusercontent.com/Kauanrodrigues01/Kauanrodrigues01/refs/heads/main/images/projetos/face-recognition-api/face-recognition-api.png" alt="Face Recognition Demo" width="1000"/>
 </p>
 
 <p align="center">
